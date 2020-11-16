@@ -1,0 +1,395 @@
+{
+ "metadata": {
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.2-final"
+  },
+  "orig_nbformat": 2,
+  "kernelspec": {
+   "name": "python_defaultSpec_1597489070988",
+   "display_name": "Python 3.8.2 64-bit ('machine': venv)"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2,
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **Hand Written Digit Recognision**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## **Importing Libraries & Loading Dataset**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "*First, we'll import all the modules needed for training the model. The Keras library comes with some datasets and MNIST is one of them, meaning we can easily import the dataset and start working with it. The ***mnist.load_data()*** method returns us the labeled training data and labelled testing data.*"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "> **[ python 101 ]** *using 'import' loads a python module into its own namespac i.e., you'd have to use '.' after module name to use reference, **[w = cars.wheels]** using from loads module in current namespace i.e., you can directly refer to it without mentioning module again, **[w = wheels]**.*"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": "(60000, 28, 28) (60000,)\n"
+    }
+   ],
+   "source": [
+    "import keras\n",
+    "\n",
+    "from keras.datasets import mnist\n",
+    "from keras.models import Sequential\n",
+    "from keras.layers import Dense, Dropout, Flatten\n",
+    "from keras.layers import Conv2D, MaxPooling2D\n",
+    "from keras import backend as K\n",
+    "\n",
+    "# spliting data between training set and testing set\n",
+    "(x_train, y_train), (x_test, y_test) = mnist.load_data()\n",
+    "\n",
+    "print(x_train.shape, y_train.shape)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**keras.datasets:** *The tf.keras.datasets module provide a few toy datasets (already-vectorized, in Numpy format) that can be used for debugging a model or creating simple code examples.*\n",
+    "> **mnist:** *This is a dataset of 60,000 28x28 grayscale images of the 10\n",
+    "digits, along with test set of 10,000 images.*\n",
+    "\n",
+    "**keras.models:** *There are three ways to create keras models:*\n",
+    "\n",
+    "\n",
+    "*   Sequential Mode\n",
+    "*   Functional API\n",
+    "*   Model Subclassing\n",
+    "\n",
+    "> **Sequential Model:** *which is very straightforward (a simple list of layers), but is limited to single-input, single-output stacks of layers (as the name gives away).*\n",
+    "\n",
+    "**keras.layers:** *Layers are the basic building blocks of neural networks in Keras. A layer consists of a tensor-in tensor-out computation function (the layer's call method) and some state, held in TensorFlow variables (the layer's weights).*\n",
+    "\n",
+    "> **Dense:** *A dense layer is just a regular layer of neurons in a neural network. Each neuron recieves input from all the neurons in the previous layer, thus densely connected. The layer has a weight matrix W, a bias vector b, and the activations of previous layer a.*\n",
+    "\n",
+    "> **Dropout:** *The Dropout layer randomly sets input units to 0 with a frequency of rate at each step during training time, which helps prevent overfitting. Inputs not set to 0 are scaled up by 1/(1 - rate) such that the sum over all inputs is unchanged.*\n",
+    "\n",
+    "*Overfitting refers to a model that models the training data too well. Overfitting happens when a model learns the detail and noise in the training data to the extent that it negatively impacts the performance of the model on new data.*\n",
+    "\n",
+    "> **Flatten:** *Flatten is used to flatten the input. For example, if flatten is applied to layer having input shape as (batch_size, 2,2), then the output shape of the layer will be (batch_size, 4)*\n",
+    "\n",
+    "> **Conv2D:** *This layer creates a convolution kernel that is convolved with the layer input to produce a tensor of outputs. 2D in Conv2D means each channel in the input and filter is 2 dimensiona*\n",
+    "\n",
+    "> **MaxPooling2D:** *Downsamples the input representation by taking the maximum value over the window defined by pool_size for each dimension along the features axis.*\n",
+    "\n",
+    "**Backend:** *Keras is a model-level library, offers high-level building blocks that are useful to develop deep learning models. Instead of supporting low-level operations such as tensor products, convolutions, etc. itself, it depends upon the backend engine that is well specialized and optimized tensor manipulation library.* "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## **Preprocessing Data**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": "x_train shape: (60000, 28, 28, 1)\n60000 train samples\n10000 test samples\n"
+    }
+   ],
+   "source": [
+    "batch_size = 200\n",
+    "num_classes = 10\n",
+    "epochs = 10\n",
+    "\n",
+    "x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)\n",
+    "x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)\n",
+    "input_shape = (28, 28, 1)\n",
+    "\n",
+    "# convert class vectors to binary class matrices\n",
+    "y_train = keras.utils.to_categorical(y_train, num_classes)\n",
+    "y_test = keras.utils.to_categorical(y_test, num_classes)\n",
+    "\n",
+    "x_train = x_train.astype('float32')\n",
+    "x_test = x_test.astype('float32')\n",
+    "\n",
+    "#normalize inputs\n",
+    "x_train /= 255\n",
+    "x_test /= 255\n",
+    "\n",
+    "print('x_train shape:', x_train.shape)\n",
+    "print(x_train.shape[0], 'train samples')\n",
+    "print(x_test.shape[0], 'test samples')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": "Model: \"sequential_2\"\n_________________________________________________________________\nLayer (type)                 Output Shape              Param #   \n=================================================================\nconv2d_4 (Conv2D)            (None, 26, 26, 32)        320       \n_________________________________________________________________\nconv2d_5 (Conv2D)            (None, 24, 24, 64)        18496     \n_________________________________________________________________\nmax_pooling2d_2 (MaxPooling2 (None, 12, 12, 64)        0         \n_________________________________________________________________\ndropout_4 (Dropout)          (None, 12, 12, 64)        0         \n_________________________________________________________________\nflatten_2 (Flatten)          (None, 9216)              0         \n_________________________________________________________________\ndense_4 (Dense)              (None, 256)               2359552   \n_________________________________________________________________\ndropout_5 (Dropout)          (None, 256)               0         \n_________________________________________________________________\ndense_5 (Dense)              (None, 10)                2570      \n=================================================================\nTotal params: 2,380,938\nTrainable params: 2,380,938\nNon-trainable params: 0\n_________________________________________________________________\n"
+    }
+   ],
+   "source": [
+    "model = Sequential()\n",
+    "model.add(Conv2D(32, kernel_size=(3, 3),activation='relu',input_shape=input_shape))\n",
+    "model.add(Conv2D(64, (3, 3), activation='relu'))\n",
+    "model.add(MaxPooling2D(pool_size=(2, 2)))\n",
+    "model.add(Dropout(0.25))\n",
+    "model.add(Flatten())\n",
+    "model.add(Dense(256, activation='relu'))\n",
+    "model.add(Dropout(0.5))\n",
+    "model.add(Dense(num_classes, activation='softmax'))\n",
+    "\n",
+    "model.compile(loss=keras.losses.binary_crossentropy,optimizer='adam',metrics=['accuracy'])\n",
+    "\n",
+    "model.summary()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": "Epoch 1/10\n300/300 - 53s - loss: 0.0379 - accuracy: 0.9298 - val_loss: 0.0095 - val_accuracy: 0.9840\nEpoch 2/10\n300/300 - 49s - loss: 0.0128 - accuracy: 0.9783 - val_loss: 0.0071 - val_accuracy: 0.9869\nEpoch 3/10\n300/300 - 48s - loss: 0.0092 - accuracy: 0.9849 - val_loss: 0.0058 - val_accuracy: 0.9890\nEpoch 4/10\n300/300 - 50s - loss: 0.0074 - accuracy: 0.9874 - val_loss: 0.0057 - val_accuracy: 0.9898\nEpoch 5/10\n300/300 - 52s - loss: 0.0061 - accuracy: 0.9891 - val_loss: 0.0053 - val_accuracy: 0.9911\nEpoch 6/10\n300/300 - 59s - loss: 0.0053 - accuracy: 0.9911 - val_loss: 0.0050 - val_accuracy: 0.9922\nEpoch 7/10\n300/300 - 51s - loss: 0.0046 - accuracy: 0.9920 - val_loss: 0.0051 - val_accuracy: 0.9912\nEpoch 8/10\n300/300 - 53s - loss: 0.0042 - accuracy: 0.9926 - val_loss: 0.0047 - val_accuracy: 0.9923\nEpoch 9/10\n300/300 - 52s - loss: 0.0038 - accuracy: 0.9929 - val_loss: 0.0053 - val_accuracy: 0.9914\nEpoch 10/10\n300/300 - 55s - loss: 0.0033 - accuracy: 0.9944 - val_loss: 0.0050 - val_accuracy: 0.9920\nThe model has successfully trained\nSaving the model as mnist.h5\n"
+    }
+   ],
+   "source": [
+    "#fit the model\n",
+    "hist = model.fit(x_train, y_train,batch_size=200,epochs=epochs,verbose=2,validation_data=(x_test, y_test))\n",
+    "print(\"The model has successfully trained\")\n",
+    "\n",
+    "#save model\n",
+    "model.save('mnist.h5')\n",
+    "print(\"Saving the model as mnist.h5\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## **Evaluating Model**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": "Test loss: 0.004968810360878706\nTest accuracy: 0.9919999837875366\n"
+    }
+   ],
+   "source": [
+    "score = model.evaluate(x_test, y_test, verbose=0)\n",
+    "print('Test loss:', score[0])\n",
+    "print('Test accuracy:', score[1])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## **Creating GUI**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "text": "Model load Successfull, start App\n"
+    }
+   ],
+   "source": [
+    "import os\n",
+    "import PIL\n",
+    "import cv2\n",
+    "import glob\n",
+    "import numpy as np\n",
+    "from tkinter import *\n",
+    "from PIL import Image, ImageDraw, ImageGrab\n",
+    "\n",
+    "#load model\n",
+    "from keras.models import load_model\n",
+    "model = load_model('mnist.h5')\n",
+    "print(\"Model load Successfull, start App\")\n",
+    "\n",
+    "def clear_widget():\n",
+    "    global cv\n",
+    "    #clear canvas\n",
+    "    cv.delete(\"all\")\n",
+    "\n",
+    "def activate_event(event):\n",
+    "    global lastx, lasty\n",
+    "    #<B1-Motion>\n",
+    "    cv.bind('<B1-Motion>', draw_lines)\n",
+    "    lastx, lasty = event.x, event.y\n",
+    "\n",
+    "def draw_lines(event):\n",
+    "    global lastx, lasty\n",
+    "    x, y = event.x, event.y\n",
+    "    #do canvas drawing\n",
+    "    cv.create_line((lastx, lasty, x, y), width=8, fill='black', capstyle=ROUND, smooth=TRUE, splinesteps=12)\n",
+    "\n",
+    "    lastx, lasty = x, y\n",
+    "\n",
+    "def Recognize_Digit():\n",
+    "    global image_number\n",
+    "    predictions = []\n",
+    "    percentage = []\n",
+    "    #image_number = 0\n",
+    "    filename = f'image_{image_number}.png'\n",
+    "    widget=cv\n",
+    "\n",
+    "    #get the widget coordinates\n",
+    "    x=root.winfo_rootx()+widget.winfo_x()\n",
+    "    y=root.winfo_rooty()+widget.winfo_y()\n",
+    "    x1=x+widget.winfo_width()\n",
+    "    y1=y+widget.winfo_height()\n",
+    "\n",
+    "    #grab the image, crop it according to my requirement and saves it in png format\n",
+    "    ImageGrab.grab().crop((x,y,x1,y1)).save(filename)\n",
+    "\n",
+    "    #read image in color\n",
+    "    image = cv2.imread(filename, cv2.IMREAD_COLOR)\n",
+    "\n",
+    "    #convert image to grayscale\n",
+    "    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)\n",
+    "\n",
+    "    #applying Otsu thresholding\n",
+    "    ret, th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)\n",
+    "\n",
+    "    #find contour\n",
+    "    contours = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]\n",
+    "\n",
+    "    for cnt in contours:\n",
+    "        #get bounding box & extract ROI\n",
+    "        x,y,w,h = cv2.boundingRect(cnt)\n",
+    "        #create rectangle\n",
+    "        cv2.rectangle(image, (x,y), (x+w, y+h), (255,0,0), 1)\n",
+    "        top = int(0.05 * th.shape[1])\n",
+    "        bottom = top\n",
+    "        left = int(0.05 * th.shape[1])\n",
+    "        right = left\n",
+    "        th_up = cv2.copyMakeBorder(th, top, bottom, left, right, cv2.BORDER_REPLICATE)\n",
+    "        #extract the image ROI\n",
+    "        roi = th[y-top:y+h+bottom, x-left:x+w+right]\n",
+    "        #resize roi image 28x28 pixels\n",
+    "        img = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)\n",
+    "        #reshaping the image to support our model input\n",
+    "        img = img.reshape(1,28,28,1)\n",
+    "        #normalizing the image to support our model input\n",
+    "        img = img/255.0\n",
+    "        #predict results\n",
+    "        pred = model.predict([img])[0]\n",
+    "        #numpy.argmax(input array) return the indices of the maximum values.\n",
+    "        final_pred = np.argmax(pred)\n",
+    "        data = str(final_pred) +' '+ str(int(max(pred)*100))+'%'\n",
+    "        #cv2.putText() method is used to draw a text string on image.\n",
+    "        font = cv2.FONT_HERSHEY_SIMPLEX\n",
+    "        fontScale = 0.5\n",
+    "        color = (255, 0, 0)\n",
+    "        thickness = 1\n",
+    "        cv2.putText(image, data, (x,y-5), font, fontScale, color, thickness)\n",
+    "\n",
+    "    #show predicted result on new window.\n",
+    "    cv2.imshow('image', image)\n",
+    "    cv2.waitKey(0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "root = Tk()\n",
+    "root.resizable(0, 0)\n",
+    "root.title(\"Handwritten Digit Recognition GUI\")\n",
+    "\n",
+    "#initialize variables\n",
+    "lastx, lasty = None, None\n",
+    "image_number = 0\n",
+    "\n",
+    "#create canvas for drawing\n",
+    "cv = Canvas(root, width=640, height=480, bg='white')\n",
+    "cv.grid(row=0, column=0, pady=2, sticky=W, columnspan=2)\n",
+    "\n",
+    "#Tkinter provides a powerful mechanism to let you deal with events yourself.\n",
+    "cv.bind('<Button-1>', activate_event)\n",
+    "\n",
+    "#add buttons and labels\n",
+    "btn_save = Button(text=\"Recognize Digit\", command=Recognize_Digit)\n",
+    "btn_save.grid(row=2, column=0, pady=1, padx=1)\n",
+    "button_clear = Button(text = \"Clear Widget\", command = clear_widget)\n",
+    "button_clear.grid(row=2, column=1, pady=1, padx=1)\n",
+    "\n",
+    "#mainloop() used when application ready to run.\n",
+    "root.mainloop()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ]
+}
